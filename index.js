@@ -1,52 +1,61 @@
-const express = require('express')
-const cors = require('cors')
-require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const { MongoClient } = require('mongodb');
 
-const app = express()
-const port = process.env.port || 3000;
-
-
-
-
-
+const app = express();
+const port = process.env.PORT || 3000;
 
 const uri = `mongodb+srv://${process.env.md_user}:${process.env.md_pass}@cluster0.yxc4i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-console.log(uri);
+//console.log(uri);
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+const client = new MongoClient(uri);
+
+app.use(cors());
+app.use(express.json());
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+    //console.log('Connected to MongoDB!');
+    const database = client.db('movieDB');
+    const moviesCollection = database.collection('movies');
+
+
+    // Add movie endpoint
+    app.post('/movies', async (req, res) => {
+      
+      try {
+        const movieData = req.body;
+        console.log( movieData);
+        
+        const result = await moviesCollection.insertOne(movieData);
+        res.status(201).json({ message: 'Movie added successfully!', id: result.insertedId });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // Fetch movies endpoint
+    app.get('/movies', async (req, res) => {
+      try {
+        const movies = await moviesCollection.find().toArray();
+        res.send(movies);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    })
+  } catch (error) {
+   
   }
 }
+
 run().catch(console.dir);
 
-
-
-
-app.use(cors());
-app.use(express.json())
-
 app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+  res.send('Movie API is running!');
+});
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Server is running on port ${port}`);
+});
