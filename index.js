@@ -37,7 +37,14 @@ async function run() {
     });
 
     // Fetch movies endpoint
-
+    app.get('/movies', async (req, res) => {
+      try {
+        const movies = await moviesCollection.find().toArray();
+        res.send(movies);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    })
   } catch (error) {
    
   }
@@ -48,15 +55,6 @@ run().catch(console.dir);
 app.get('/', (req, res) => {
   res.send('Movie API is running!');
 });
-
-app.get('/movies', async (req, res) => {
-  try {
-    const movies = await moviesCollection.find().toArray();
-    res.send(movies);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-})
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
